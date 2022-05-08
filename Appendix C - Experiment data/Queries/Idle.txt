@@ -1,0 +1,9 @@
+let
+    Kilde = Csv.Document(File.Contents("<file location>"),18,"",ExtraValues.Ignore,1252),
+    #"Forfremmede overskrifter" = Table.PromoteHeaders(Kilde, [PromoteAllScalars=true]),
+    #"Endret type" = Table.TransformColumnTypes(#"Forfremmede overskrifter",{{"r", Int64.Type}, {"b", Int64.Type}, {"swpd", Int64.Type}, {"free", Int64.Type}, {"buff", Int64.Type}, {"cache", Int64.Type}, {"si", Int64.Type}, {"so", Int64.Type}, {"bi", Int64.Type}, {"bo", Int64.Type}, {"in", Int64.Type}, {"cs", Int64.Type}, {"us", Int64.Type}, {"sy", Int64.Type}, {"id", Int64.Type}, {"wa", Int64.Type}, {"st", Int64.Type}, {"CEST", type datetime}}),
+    #"Opphevet pivotering for andre kolonner" = Table.UnpivotOtherColumns(#"Endret type", {"CEST"}, "Attributt", "Verdi"),
+    #"Grupperte rader" = Table.Group(#"Opphevet pivotering for andre kolonner", {"Attributt"}, {{"Average", each List.Average([Verdi]), type number}, {"Minimum", each List.Min([Verdi]), type number}, {"Maximum", each List.Max([Verdi]), type number}}),
+    #"Egendefinert lagt til" = Table.AddColumn(#"Grupperte rader", "Experiment", each "Idle")
+in
+    #"Egendefinert lagt til"

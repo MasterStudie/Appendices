@@ -1,0 +1,177 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "modules": {
+                    "LinuxAudio": {
+                        "settings": {
+                            "image": "<repository>/linuxaudio:0.0.5-arm32v7",
+                            "createOptions": "{\"HostConfig\":{\"Devices\":[{\"PathOnHost\":\"/dev/snd\",\"PathInContainer\":\"/dev/snd\",\"CgroupPermissions\":\"rwm\"}]}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "LoggingController": {
+                        "settings": {
+                            "image": "<repository>/loggingcontroller:0.0.4-arm32v7",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "FileCreator": {
+                        "settings": {
+                            "image": "<repository>/filecreator:0.0.1-arm32v7",
+                            "createOptions": "{\"HostConfig\":{\"Binds\":[\"/tmp/:/storage\"]}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "LoggingScheduler": {
+                        "settings": {
+                            "image": "<repository>/loggingscheduler:0.0.1-arm32v7",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "IOTEDGE_DEVICEID": {
+                                "value": "<device_id>"
+                            }
+                        },
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "RmsMonitor": {
+                        "settings": {
+                            "image": "<repository>/rmsmonitor:0.0.1-arm32v7",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "IOTEDGE_DEVICEID": {
+                                "value": "<device_id>"
+                            }
+                        },
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "azureblobstorageoniotedge": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azure-blob-storage:1.4.1-linux-arm32v7",
+                            "createOptions": "{\"Env\":[\"LOCAL_STORAGE_ACCOUNT_NAME=<account_name>\",\"LOCAL_STORAGE_ACCOUNT_KEY=<account_key>"],\"HostConfig\":{\"Binds\":[\"blob-volume32:/blobroot\"],\"PortBindings\":{\"11002/tcp\":[{\"HostPort\":\"11002\"}]}}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                },
+                "runtime": {
+                    "settings": {
+                        "minDockerVersion": "v1.25",
+                        "registryCredentials": {
+                            "masterOppgave": {
+                                "address": "<repository>",
+                                "password": "<service_principal_secret>",
+                                "username": "<service_principal_id>"
+                            }
+                        }
+                    },
+                    "type": "docker"
+                },
+                "schemaVersion": "1.1",
+                "systemModules": {
+                    "edgeAgent": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-agent:1.1",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "env": {
+                            "SendRuntimeQualityTelemetry": {
+                                "value": "false"
+                            }
+                        }
+                    },
+                    "edgeHub": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"443/tcp\":[{\"HostPort\":\"443\"}],\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}]}}}"
+                        },
+                        "type": "docker",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "routes": {
+                    "LinuxAudioToLoggingController": "FROM /messages/modules/LinuxAudio/outputs/* INTO BrokeredEndpoint(\"/modules/LoggingController/inputs/sensor\")",
+                    "LoggingControllerToFileCreator": "FROM /messages/modules/LoggingController/outputs/storage INTO BrokeredEndpoint(\"/modules/FileCreator/inputs/storage\")",
+                    "LoggingControllerRequestedToFileCreator": "FROM /messages/modules/LoggingController/outputs/requested INTO BrokeredEndpoint(\"/modules/FileCreator/inputs/blocks\")",
+                    "LoggingCOntrollerToRmsMonitor": "FROM /messages/modules/LoggingController/outputs/stream INTO BrokeredEndpoint(\"/modules/RmsMonitor/inputs/stream\")",
+                    "RmsMonitorAlerts": "FROM /messages/modules/RmsMonitor/outputs/alert INTO $upstream"
+                },
+                "schemaVersion": "1.1",
+                "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 7200
+                }
+            }
+        },
+        "LinuxAudio": {
+            "properties.desired": {
+                "audio_device_index": 2,
+                "sensor_id": "test",
+                "daq_log": true,
+                "width": 2,
+                "channels": 1,
+                "rate": 44100,
+                "block_size": 4410
+            }
+        },
+        "LoggingController": {
+            "properties.desired": {}
+        },
+        "FileCreator": {
+            "properties.desired": {}
+        },
+        "LoggingScheduler": {
+            "properties.desired": {}
+        },
+        "RmsMonitor": {
+            "properties.desired": {
+                "max_calculated_rms": 0.1
+            }
+        },
+        "azureblobstorageoniotedge": {
+            "properties.desired": {
+                "deviceAutoDeleteProperties": {
+                    "deleteOn": true,
+                    "deleteAfterMinutes": 5,
+                    "retainWhileUploading": true
+                },
+                "deviceToCloudUploadProperties": {
+                    "uploadOn": true,
+                    "uploadOrder": "OldestFirst",
+                    "cloudStorageConnectionString": "<connection_string>",
+                    "storageContainersForUpload": {
+                        "cont1": {
+                            "target": "edge-cont1"
+                        }
+                    },
+                    "deleteAfterUpload": true
+                }
+            }
+        }
+    }
+}

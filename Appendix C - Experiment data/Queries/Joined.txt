@@ -1,0 +1,6 @@
+let
+    Kilde = Table.Combine({append_load, append_noLoad}),
+    #"Omorganiserte kolonner" = Table.ReorderColumns(Kilde,{"Experiment", "Attributt", "Average", "Minimum", "Maximum"}),
+    #"Kolonner med nye navn" = Table.RenameColumns(#"Omorganiserte kolonner",{{"Attributt", "Measurand"}})
+in
+    #"Kolonner med nye navn"
